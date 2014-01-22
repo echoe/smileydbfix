@@ -1,11 +1,24 @@
 #MySQL database checker and fixer
 #Sam Felshman
-#Version 0.1
+#Version 0.12
 
 #Check to make sure mysql version is 5.x
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]
 then
-echo "You have MySQL 5 or an equivalent! :D"
+echo "You have MySQL 5 or an equivalent :D"
+echo -e "Would you like to check space for backups? y for yes"
+read checkspace
+if [ checkspace == "y" ]; then
+  echo "Space left is:" `du -sh /home` " and space MySQL takes up is:" du -sh `grep datadir /etc/my.cnf | sed s/"datadir="//g`
+fi
+echo -e "Would you like to make backups? y for yes"
+read backups
+if [ backups == "y" ]; then
+  thedate=`date`;
+  mkdir -p /home/sqldumps/$thedate; 
+  cd /home/sqldumps/$thedate; 
+  for i in `echo "show databases;" | mysql` ; do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i ;done
+fi
 #for loop, grab all the databases
 for database in $(mysql -e "SHOW DATABASES;"|tail -n+2)
 do
