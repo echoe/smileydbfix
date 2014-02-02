@@ -1,5 +1,5 @@
 #MySQL database checker and fixer
-#Version 0.17
+#Version 0.19
 #To parse logs: :D means it is repairing successfully. :| means did nothing. 
 
 #To add tee logging to everything.
@@ -16,13 +16,12 @@ echo -e "Would you like to check space for backups? y for yes"
 read checkspace
 if [ $checkspace == "y" ]; then
   datadir=`grep datadir /etc/my.cnf | sed s/"datadir="//g`
-  echo "Space left is:" `du -sh /home` "and space MySQL takes up is:" `du -sh $datadir` | $log
+  echo "Space left is:" `df -h | awk '{print $4}' | head -n2 | tail -n1` "and space MySQL takes up is:" `du -sh $datadir` | $log
 fi
 echo -e "Would you like to make backups? y for yes"
 read backups
 if [ $backups == "y" ]; then
-  #this only sorts by day of week. this is semi-intentional [not really, but it works as is]
-  thedate=`date`;
+  thedate=`date | sed -e s/" "/_/g`;
   mkdir -p /home/sqldumps/$thedate; 
   cd /home/sqldumps/$thedate; 
   for i in $(mysql -BNe 'show databases'| grep -v _schema); do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i | $log ;done
