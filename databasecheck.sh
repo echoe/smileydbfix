@@ -25,8 +25,9 @@ if [ $backups == "y" ]; then
 fi
 echo -e "Would you like to take a logfile?"
 read logs
-if [ $logs == "y" ] then
-  log= >> /root/databasechecklog.txt
+if [ $logs == "y" ]; then
+  log=">> /root/databasechecklog.txt"
+  else log=""
 fi
 echo "Actually running MyISAM check? y for yes"
 read myisam
