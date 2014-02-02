@@ -3,7 +3,7 @@
 #To parse logs: :D means it is repairing successfully. :| means did nothing. 
 
 #To add tee logging to everything.
-log="tee /root/databasechecklog.txt"
+log="tee >> /root/databasechecklog.txt"
 
 #Check to make sure mysql version is 5.x
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]
@@ -11,7 +11,7 @@ if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]
   echo "You have MySQL 5 or an equivalent :D" | $log
   else echo "you don't have MySQL 5! don't run this >.>" | $log; break
 fi
-
+#ask because this takes forever D:
 echo -e "Would you like to check space for backups? y for yes"
 read checkspace
 if [ $checkspace == "y" ]; then
@@ -21,10 +21,11 @@ fi
 echo -e "Would you like to make backups? y for yes"
 read backups
 if [ $backups == "y" ]; then
+  #this only sorts by day of week. this is semi-intentional [not really, but it works as is]
   thedate=`date`;
   mkdir -p /home/sqldumps/$thedate; 
   cd /home/sqldumps/$thedate; 
-  for i in `echo "show databases;" | mysql` ; do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i | $log ;done
+  for i in $(mysql -BNe 'show databases'| grep -v _schema); do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i | $log ;done
 fi
 echo "Actually running MyISAM check? y for yes"
 read myisam
