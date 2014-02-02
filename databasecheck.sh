@@ -1,6 +1,6 @@
 #MySQL database checker and fixer https://github.com/echoe/smileydbfix/raw/master/databasecheck.sh
 #Version 0.21
-#To parse logs: :D means it is repairing successfully. :| means that it did nothing. 
+#To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 
 #this is so that you can use the current date in anything you need it in [logfiles,backups]
 thedate=`date | sed -e s/" "/_/g`;
@@ -25,9 +25,9 @@ if [ $backups == "y" ]; then
   cd /home/sqldumps/$thedate; 
   for i in $(mysql -BNe 'show databases'| grep -v _schema); do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i | tee -a /tmp/dblogfile ;done
 fi
-echo "Actually running MyISAM check? y for yes"
+echo "Would you actually like to run MyISAM checks? Type y for yes"
 read myisam
-echo "Actually running InnoDB alter table? y for yes"
+echo "Would you actually like to run InnoDB alter table commands? Type y for yes"
 read innodb
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
