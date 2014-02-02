@@ -42,7 +42,8 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
          if [ $innodb == y ]; then
               echo "$table in $database is InnoDB, rebuilding with alter table command :D" | $log
               mysql -e "use $database; ALTER TABLE $table ENGINE = InnoDB" | $log
-         else echo "$table in $database is InnoDB, doing nothing - disabled :|" | $log
+              else echo "$table in $database is InnoDB, doing nothing - disabled :|" | $log
+         fi
     elif [ $tabletype == "MyISAM" ]; then
          if [ $myisam == y ]; then
               echo "$table in $database is MyISAM, repairing with mysqlcheck :D" | $log
