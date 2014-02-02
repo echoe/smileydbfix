@@ -1,5 +1,4 @@
 #MySQL database checker and fixer
-#Sam Felshman
 #Version 0.15
 #To parse logs: :D means it is repairing successfully. :| means did nothing. 
 
