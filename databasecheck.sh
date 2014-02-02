@@ -4,8 +4,6 @@
 
 #this is so that you can use the current date in anything you need it in [logfiles,backups]
 thedate=`date | sed -e s/" "/_/g`;
-#Tell them about the logs!
-echo "Logs for this are created in /tmp/dblogfile."
 #Check to make sure mysql version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" tee /tmp/dblogfile
@@ -57,3 +55,5 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
     fi
   done
 done
+#Tell them about the logs now that it's run!
+echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile."
