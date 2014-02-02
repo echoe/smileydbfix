@@ -1,5 +1,5 @@
 #MySQL database checker and fixer
-#Version 0.15
+#Version 0.17
 #To parse logs: :D means it is repairing successfully. :| means did nothing. 
 
 #To add tee logging to everything.
