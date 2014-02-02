@@ -27,9 +27,11 @@ fi
 #this functionality is broken. i am working on it
 #also, before this delete the old log file if it's already there, or move it, e.g.:
 #if [ -a (filename) ]; then mv (filename) (filename.thedate
-if [ $logs == "y" ]; then
-  echo "sorry, this is disabled for now :/ please wait for me to fix this, or you can do it yourself. For now this is ato-writing to /root/databasechecklog.txt"
-fi
+#echo -e "Would you like to take a logfile?"
+#read logs;
+#if [ $logs == "y" ]; then
+#  echo "sorry, this is disabled for now :/ please wait for me to fix this, or you can do it yourself. For now this is ato-writing to /root/databasechecklog.txt"
+#fi
 echo "Actually running MyISAM check? y for yes"
 read myisam
 echo "Actually running InnoDB alter table? y for yes"
