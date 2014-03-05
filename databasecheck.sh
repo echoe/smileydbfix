@@ -1,4 +1,4 @@
-#MySQL database checker and fixer https://github.com/echoe/smileydbfix/raw/master/databasecheck.sh
+#MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
 #Version 0.21
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 
