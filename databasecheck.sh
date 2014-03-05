@@ -1,12 +1,15 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.21
+#Version 0.22
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 
 #this is so that you can use the current date in anything you need it in [logfiles,backups]
 thedate=`date | sed -e s/" "/_/g`;
+#This is taken from mysqltunr and counts the number of fractured tables. :)
+fracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
 #Check to make sure mysql version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" tee /tmp/dblogfile
+  echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
   else echo "you don't have MySQL 5! don't run this >.>" | tee /tmp/dblogfile; break
 fi
 #Ask because this takes forever D:
@@ -23,7 +26,7 @@ if [ $backups == "y" ]; then
   cd /home/sqldumps/$thedate; 
   for i in $(mysql -BNe 'show databases'| grep -v _schema); do `mysqldump $i > ./$i.sql` ; echo "we have backed up "$i | tee -a /tmp/dblogfile ;done
 fi
-echo "Would you actually like to run MyISAM checks? Type y for yes"
+echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y for yes"
 read myisam
 echo "Would you actually like to run InnoDB alter table commands? Type y for yes"
 read innodb
@@ -56,4 +59,15 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
   done
 done
 #Tell them about the logs now that it's run!
-echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile."
+echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
+echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile. If you want, you can do a MyISAM check if there are still too many broken tables. Just type 'y'.
+WARNING: THIS WILL SHUT DOWN YOUR MYSQL SERVER FOR THE DURATION OF THE CHECK."
+read myisamcheck;
+if [ $myisamcheck == y ];
+  service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld
+  myisamchk --safe-recover --key_buffer_size=1G --read_buffer_size=300M --write_buffer_size=300M --sort_buffer_size=2G /var/lib/mysql/*/*.MYI | tee -a /tmp/dblogfile
+  chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start
+  echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
+  echo "Your files are as fixed as possible! Have a great day. :D"
+else echo "Good choice, I think. :) Hopefully this helped."
+fi
