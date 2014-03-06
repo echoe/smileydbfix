@@ -66,13 +66,13 @@ echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
 echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile. If you want, you can do a MyISAM check if there are still too many broken tables. Just type 'y'.
 WARNING: THIS WILL SHUT DOWN YOUR MYSQL SERVER FOR THE DURATION OF THE CHECK."
 read myisamcheck;
-if [ $myisamcheck == y ];
+if [ $myisamcheck == y ]; then
   service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld
   myisamchk --safe-recover --key_buffer_size=1G --read_buffer_size=300M --write_buffer_size=300M --sort_buffer_size=2G /var/lib/mysql/*/*.MYI | tee -a /tmp/dblogfile
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start
   echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
   echo "Your files are as fixed as possible! Have a great day. :D"
-else;
+else
   echo "Good choice! :) Hopefully this helped. Please comment on my github if you see any issues or have any feature requests!"
 fi
 echo "End of check" >> /tmp/dblogfile
