@@ -6,6 +6,8 @@
 thedate=`date | sed -e s/" "/_/g`;
 #This is taken from mysqltunr and counts the number of fractured tables. :)
 fracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+#Welcome!
+echo "Welcome to databasecheck.sh!" | tee /tmp/dblogfile
 #Check to make sure mysql version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" tee /tmp/dblogfile
@@ -69,5 +71,7 @@ if [ $myisamcheck == y ];
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start
   echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
   echo "Your files are as fixed as possible! Have a great day. :D"
-else echo "Good choice, I think. :) Hopefully this helped."
+else;
+  echo "Good choice! :) Hopefully this helped. Please comment on my github if you see any issues or have any feature requests!"
 fi
+echo "End of check" >> /tmp/dblogfile
