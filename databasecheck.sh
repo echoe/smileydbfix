@@ -1,5 +1,6 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.22
+#or bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
+#Version 0.23
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 
 #this is so that you can use the current date in anything you need it in [logfiles,backups]
