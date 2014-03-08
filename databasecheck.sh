@@ -102,7 +102,7 @@ if [ $myisamcheck == "yes" ]; then
   service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld | tee -a /tmp/dblogfile
   myisamchk --safe-recover --key_buffer_size=1G --read_buffer_size=300M --write_buffer_size=300M --sort_buffer_size=2G /var/lib/mysql/*/*.MYI | tee -a /tmp/dblogfile
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
-  endtime=`date | awk '{print $2,$3,$4}'
+  endtime=`date | awk '{print $2,$3,$4}'`
   echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile
   echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $fracturedtables." | tee -a /tmp/dblogfil
 fi
