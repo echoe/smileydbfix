@@ -1,6 +1,6 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
 #or bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
-#Version 0.26
+#Version 0.27
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 #if you'd like, add variables here! Just uncomment and switch to whatever.
 runasscript=n
@@ -59,7 +59,7 @@ if [ $runasscript = n ]; then
     read myisamcheck
   fi
 #this bottom fi is just for the 'skip setting variables' part of the script
-  else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile;
+  else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
   if [ $checkspace == "y" ]; then checkspacefunction; fi
   if [ $backups == "y" ]; then backupfunction; fi
 fi
@@ -71,7 +71,7 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
   for table in $(mysql -e "use $database; show tables;" | tail -n+2); do
 #find the type of engine the table is running in
     tabletype=`mysql -e "SELECT ENGINE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='$table' AND TABLE_SCHEMA='$database';" | tail -n+2`
-#check to see which table and fix it with a preferred method for each, or spout information
+#check to see which table it is, and fix it with a preferred method for each as needed
     if [ $tabletype == "InnoDB" ]; then
       if [ $innodb == y ]; then
         echo "$table in $database is InnoDB, rebuilding with alter table command :D" | tee -a /tmp/dblogfile
@@ -104,9 +104,9 @@ if [ $myisamcheck == "yes" ]; then
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
   endtime=`date | awk '{print $2,$3,$4}'`
   echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile
-  echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $fracturedtables." | tee -a /tmp/dblogfil
+  echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $fracturedtables." | tee -a /tmp/dblogfile
 fi
 #Tell them about the logs now that it's run!
-echo "Final number of fractured tables: $fracturedtables" | tee /tmp/dblogfile
-echo "Total change: from $starttables to $fracturedtables" | tee /tmp/dblogfile
-echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee -a /tmp/dblogfil
+echo "Final number of fractured tables: $fracturedtables" | tee -a /tmp/dblogfile
+echo "Total change: from $starttables to $fracturedtables" | tee -a /tmp/dblogfile
+echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee -a /tmp/dblogfile
