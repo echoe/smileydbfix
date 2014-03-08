@@ -92,7 +92,7 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
   done
 done
 #run the myisamcheck if needed.
-if [ $myisamcheck == yes ]; then
+if [ $myisamcheck == "yes" ]; then
   #Tell the user what's up.
   startmyisamtables=$fracturedtables
   echo "Current number of fractured tables: $fracturedtables" | tee -a /tmp/dblogfile
