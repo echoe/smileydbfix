@@ -1,6 +1,6 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
 #or bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
-#Version 0.23
+#Version 0.24
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 
 #this is so that you can use the current date in anything you need it in [logfiles,backups]
@@ -13,6 +13,8 @@ echo "Welcome to databasecheck.sh!" | tee /tmp/dblogfile
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" tee /tmp/dblogfile
   echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
+  #set starttables to # of current fractured tables.
+  starttables=$fracturedtables
   else echo "you don't have MySQL 5! don't run this >.>" | tee /tmp/dblogfile; break
 fi
 #Ask because this takes forever D:
@@ -33,6 +35,14 @@ echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y fo
 read myisam
 echo "Would you actually like to run InnoDB alter table commands? Type y for yes"
 read innodb
+#Check for MyISAM with 'yes' and not 'y' to be sure that this is needed.
+echo "Would you actually like to run the MyISAMcheck MySQL check? Type yes for yes"
+read myisamcheck
+#Check this again just to make absolutely, /absolutely/ sure.
+if [ $myisamcheck == yes ]; then
+  echo "Are you sure? This will, again, cause MySQL downtime! Please type yes again to confirm."
+  read myisamcheck
+fi
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
 #for loop, grab all the databases
@@ -52,8 +62,8 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
          if [ $myisam == y ]; then
               echo "$table in $database is MyISAM, repairing with mysqlcheck :D" | tee -a /tmp/dblogfile
               mysqlcheck --auto-repair --optimize $database $table | tee -a /tmp/dblogfile
-              else echo "$table in $database is MyIsam, doing nothing - disabled :|" | tee -a /tmp/dblogfile
-         fi 
+              else echo "$table in $database is MyISAM, doing nothing - disabled :|" | tee -a /tmp/dblogfile
+         fi
     elif [ $tabletype == "MERGE" ]; then
          echo "$table in $database is MERGE, checking table :D Maybe you can fix with a UNION command, but I don't do that." | tee -a /tmp/dblogfile
          mysql -e "use $database; CHECK TABLE $table" | tee -a /tmp/dblogfile
@@ -61,18 +71,21 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
     fi
   done
 done
-#Tell them about the logs now that it's run!
-echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
-echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile. If you want, you can do a MyISAM check if there are still too many broken tables. Just type 'y'.
-WARNING: THIS WILL SHUT DOWN YOUR MYSQL SERVER FOR THE DURATION OF THE CHECK."
-read myisamcheck;
-if [ $myisamcheck == y ]; then
-  service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld
+#run the myisamcheck if needed
+if [ $myisamcheck == yes ]; then
+  startmyisamtables=$fracturedtables
+  echo "Current number of fractured tables: $fracturedtables" | tee /tmp/dblogfile
+  echo "MyISAM check enabled, turning off MySQL and running now!" | tee -a /tmp/dblogfile
+  #Record the date [to get total downtime], then turn off MySQL for the checks.
+  starttime=`date | awk '{print $2,$3,$4}'`
+  service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld | tee -a /tmp/dblogfile
   myisamchk --safe-recover --key_buffer_size=1G --read_buffer_size=300M --write_buffer_size=300M --sort_buffer_size=2G /var/lib/mysql/*/*.MYI | tee -a /tmp/dblogfile
-  chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start
-  echo "Current number of fractured tables: $fracturedtables" tee /tmp/dblogfile
-  echo "Your files are as fixed as possible! Have a great day. :D"
-else
-  echo "Good choice! :) Hopefully this helped. Please comment on my github if you see any issues or have any feature requests!"
+  chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
+  endtime=`date | awk '{print $2,$3,$4}'
+  echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile
+  echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $fracturedtables." | tee /tmp/dblogfil
 fi
-echo "End of check" >> /tmp/dblogfile
+#Tell them about the logs now that it's run!
+echo "Final number of fractured tables: $fracturedtables" | tee /tmp/dblogfile
+echo "Total change: from $starttables to $fracturedtables" | tee /tmp/dblogfile
+echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee /tmp/dblogfil
