@@ -1,5 +1,5 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.30
+#Version 0.31
 #Please keep line 2 in place for the version check.
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
@@ -27,7 +27,6 @@ if [ $runasscript = "y" ]; then
   fi
 fi
 #This is taken from mysqltunr and counts the number of fractured tables. :)
-fracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
 #Here are the checkspace and backup functions, since otherwise I'd have to call them twice
 checkspacefunction() {
   datadir=`grep datadir /etc/my.cnf | sed s/"datadir="//g`
@@ -41,14 +40,17 @@ backupfunction() {
     echo "We have backed up $i. Yay! :D" | tee -a /tmp/dblogfile
   done
 }
+#unused as of yet
+getfractured() {
+  $1=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+}
 #Welcome!
 echo "Welcome to databasecheck.sh!" | tee -a /tmp/dblogfile
 #Check to make sure mysql version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" | tee -a /tmp/dblogfile
-  echo "Current number of fractured tables: $fracturedtables" | tee -a /tmp/dblogfile
-  #set starttables to # of current fractured tables.
-  starttables=$fracturedtables
+    starttables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+  echo "Current number of fractured tables: $starttables" | tee -a /tmp/dblogfile
   else echo "you don't have MySQL 5! don't run this >.>" | tee -a /tmp/dblogfile; break
 fi
 #If running as script, skip this section. else, run this section.
@@ -110,8 +112,8 @@ done
 #run the myisamcheck if needed.
 if [ $myisamcheck == "yes" ]; then
   #Tell the user what's up.
-  startmyisamtables=$fracturedtables
-  echo "Current number of fractured tables: $fracturedtables" | tee -a /tmp/dblogfile
+  startmyisamtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+  echo "Current number of fractured tables: $startmyisamtables" | tee -a /tmp/dblogfile
   echo "MyISAM check enabled, turning off MySQL and running now!" | tee -a /tmp/dblogfile
   #Record the date [to get total downtime], then turn off MySQL for the checks.
   starttime=`date | awk '{print $2,$3,$4}'`
@@ -120,9 +122,11 @@ if [ $myisamcheck == "yes" ]; then
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
   endtime=`date | awk '{print $2,$3,$4}'`
   echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile
-  echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $fracturedtables." | tee -a /tmp/dblogfile
+  finalfracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+  echo "The MyISAM check made your fractured tables number go from $startmyisamtables to $finalfracturedtables." | tee -a /tmp/dblogfile
 fi
 #Tell them about the logs now that it's run!
-echo "Final number of fractured tables: $fracturedtables" | tee -a /tmp/dblogfile
+finalfracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
+echo "Final number of fractured tables: $finalfracturedtables" | tee -a /tmp/dblogfile
 echo "Total change: from $starttables to $fracturedtables" | tee -a /tmp/dblogfile
 echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee -a /tmp/dblogfile
