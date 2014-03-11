@@ -128,5 +128,5 @@ fi
 #Tell them about the logs now that it's run!
 finalfracturedtables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
 echo "Final number of fractured tables: $finalfracturedtables" | tee -a /tmp/dblogfile
-echo "Total change: from $starttables to $fracturedtables" | tee -a /tmp/dblogfile
+echo "Total change: from $starttables to $finalfracturedtables" | tee -a /tmp/dblogfile
 echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee -a /tmp/dblogfile
