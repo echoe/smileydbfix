@@ -3,7 +3,7 @@
 #Please keep line 2 in place for the version check.
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
-#if you'd like, add variables here! Just uncomment and switch to whatever.
+#if you'd like, change variables here! Just uncomment and switch to whatever.
 runasscript=n
 checkspace=y
 backups=y
@@ -26,7 +26,7 @@ if [ $runasscript = "y" ]; then
     echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
   fi
 fi
-#This is taken from mysqltunr and counts the number of fractured tables. :)
+#This is taken from mysqltuner and counts the number of fractured tables. :)
 #Here are the checkspace and backup functions, since otherwise I'd have to call them twice
 checkspacefunction() {
   datadir=`grep datadir /etc/my.cnf | sed s/"datadir="//g`
@@ -46,7 +46,7 @@ getfractured() {
 }
 #Welcome!
 echo "Welcome to databasecheck.sh!" | tee -a /tmp/dblogfile
-#Check to make sure mysql version is 5.x . Also, reset the logs [tee, not tee -a]
+#Check to make sure that the mysql [or mariadb] version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
   echo "You have MySQL 5 or an equivalent :D" | tee -a /tmp/dblogfile
     starttables=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
