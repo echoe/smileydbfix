@@ -10,7 +10,7 @@ checkspace=n
 backups=z
 myisam=y
 innodb=y
-updatecheck=y
+updatecheck=n
 #myisamcheck needs to be switched to yes to run
 myisamcheck=no
 #initial clearing things up. first, get date for backups and logmoving
@@ -22,10 +22,12 @@ fi
 #if this is being run as a script, check for an update before running [untested! :/]
 if [ $runasscript = "y" ]; then
   #grab
-  localversion=`sed '2q;d' $0 | awk '{print $2}'`
-  remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
-  if [ $localversion != $remoteversion ]; then
-echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
+  if [ updatecheck = "y" ]; then
+    localversion=`sed '2q;d' $0 | awk '{print $2}'`
+    remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
+    if [ $localversion != $remoteversion ]; then
+    echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
+    fi
   fi
 fi
 #This is taken from mysqltuner and counts the number of fractured tables. :)
@@ -70,7 +72,7 @@ if [ $runasscript = n ]; then
   read checkspace
   #this and backups are oneliners since they're simpler to read and shorter that way.
   if [ $checkspace == "y" ]; then checkspacefunction; fi
-echo -e "Would you like to make backups? y for yes. z for zipped backups"
+  echo -e "Would you like to make backups? y for yes. z for zipped backups"
   read backups
   if [ $backups == "y" ]; then backupfunction;
   elif [ $backups == "z" ]; then backupfunctiongzip; fi
@@ -84,14 +86,15 @@ echo -e "Would you like to make backups? y for yes. z for zipped backups"
   read myisamcheck
   #Check this again just to make absolutely, /absolutely/ sure.
   if [ $myisamcheck == yes ]; then
-echo "Are you sure? This will, again, cause MySQL downtime! Please type yes again to confirm."
+    echo "Are you sure? This will, again, cause MySQL downtime! Please type yes again to confirm."
     read myisamcheck
   fi
 #this bottom fi is just for the 'skip setting variables' part of the script
-  else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
+else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
   if [ $checkspace == "y" ]; then checkspacefunction; fi
-if [ $backups == "y" ]; then backupfunction; fi
-if [ $backups == "z" ]; then backupfunction; fi
+  if [ $backups == "y" ]; then backupfunction; fi
+  if [ $backups == "z" ]; then backupfunction; fi
+  #other variables are set 
 fi
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
