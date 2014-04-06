@@ -1,6 +1,6 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
 #Version 0.34
-#Please keep line 2 in place for the version check.
+#Please keep line 2 in place for the version check. Version 0,34: better script functionality!
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 #if you'd like, change variables here! Just uncomment and switch to whatever.
@@ -9,14 +9,15 @@ checkspace=n
 backups=z
 myisam=y
 innodb=y
+#updatecheck is untested and therefore off.
 updatecheck=n
-#myisamcheck needs to be switched to yes to run
+#myisamcheck needs to be switched to yes to run, not y. this is for safety.
 myisamcheck=no
 #initial clearing things up. first, get date for backups and logmoving
 thedate=`date | sed -e s/" "/_/g`
 #if a log exists, move it! we don't want you, log :( (this actually works)
 if [ -a /tmp/dblogfile ]; then
-mv /tmp/dblogfile /tmp/dblogfile$thedate
+  mv /tmp/dblogfile /tmp/dblogfile$thedate
 fi
 #if this is being run as a script, check for an update before running [untested! :/]
 if [ $runasscript = "y" ]; then
@@ -25,7 +26,7 @@ if [ $runasscript = "y" ]; then
     localversion=`sed '2q;d' $0 | awk '{print $2}'`
     remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
     if [ $localversion != $remoteversion ]; then
-    echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
+      echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
     fi
   fi
 fi
