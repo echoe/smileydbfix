@@ -1,49 +1,52 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.33
+#Version 0.34
 #Please keep line 2 in place for the version check.
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 #if you'd like, change variables here! Just uncomment and switch to whatever.
 runasscript=n
-checkspace=y
-backups=y
+checkspace=n
+backups=z
 myisam=y
 innodb=y
-updatecheck=y
-myisamcheck=yes
+updatecheck=n
+#myisamcheck needs to be switched to yes to run
+myisamcheck=no
 #initial clearing things up. first, get date for backups and logmoving
 thedate=`date | sed -e s/" "/_/g`
 #if a log exists, move it! we don't want you, log :( (this actually works)
 if [ -a /tmp/dblogfile ]; then
-  mv /tmp/dblogfile /tmp/dblogfile$thedate
+mv /tmp/dblogfile /tmp/dblogfile$thedate
 fi
 #if this is being run as a script, check for an update before running [untested! :/]
 if [ $runasscript = "y" ]; then
   #grab
-  localversion=`sed '2q;d' $0 | awk '{print $2}'`
-  remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
-  if [ $localversion != $remoteversion ]; then
+  if [ updatecheck = "y" ]; then
+    localversion=`sed '2q;d' $0 | awk '{print $2}'`
+    remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
+    if [ $localversion != $remoteversion ]; then
     echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
+    fi
   fi
 fi
 #This is taken from mysqltuner and counts the number of fractured tables. :)
-#Here are the checkspace and backup functions, since otherwise I'd have to call them twice
+#Here are the checkspace and backup functions, since otherwise I'd have to write them twice.
 checkspacefunction() {
   datadir=`grep datadir /etc/my.cnf | sed s/"datadir="//g`
   echo "Space left is:" `df -h | awk '{print $4}' | head -n2 | tail -n1` "and space MySQL takes up is:" `du -sh $datadir` | tee -a /tmp/dblogfile
 }
 backupfunction() {
-  mkdir -p /home/sqldumps/$thedate; 
-  cd /home/sqldumps/$thedate; 
-  for i in $(mysql -BNe 'show databases'| grep -v _schema); do 
+  mkdir -p /home/sqldumps/$thedate;
+  cd /home/sqldumps/$thedate;
+  for i in $(mysql -BNe 'show databases'| grep -v _schema); do
     `mysqldump $i > ./$i.sql` | tee -a /tmp/dblogfile
     echo "We have backed up $i. Yay! :D" | tee -a /tmp/dblogfile
   done
 }
 backupfunctiongzip() {
-  mkdir -p /home/sqldumps/$thedate; 
-  cd /home/sqldumps/$thedate; 
-  for i in $(mysql -BNe 'show databases'| grep -v _schema); do 
+  mkdir -p /home/sqldumps/$thedate;
+  cd /home/sqldumps/$thedate;
+  for i in $(mysql -BNe 'show databases'| grep -v _schema); do
     `mysqldump $i | gzip > ./$i.sql.gz` | tee -a /tmp/dblogfile
     echo "We have backed up $i and piped to gzip. Yay! :D" | tee -a /tmp/dblogfile
   done
@@ -56,7 +59,7 @@ getfractured() {
 echo "Welcome to databasecheck.sh!" | tee -a /tmp/dblogfile
 #Check to make sure that the mysql [or mariadb] version is 5.x . Also, reset the logs [tee, not tee -a]
 if [ `mysql -V | awk '{print $5}' | cut -d "." -f -1` == "5" ]; then
-  echo "You have MySQL 5 or an equivalent :D" | tee -a /tmp/dblogfile
+echo "You have MySQL 5 or an equivalent :D" | tee -a /tmp/dblogfile
     starttables=$(getfractured)
   echo "Current number of fractured tables: $starttables" | tee -a /tmp/dblogfile
   else echo "you don't have MySQL 5! don't run this >.>" | tee -a /tmp/dblogfile; break
@@ -70,7 +73,7 @@ if [ $runasscript = n ]; then
   if [ $checkspace == "y" ]; then checkspacefunction; fi
   echo -e "Would you like to make backups? y for yes. z for zipped backups"
   read backups
-  if [ $backups == "y" ]; then backupfunction; 
+  if [ $backups == "y" ]; then backupfunction;
   elif [ $backups == "z" ]; then backupfunctiongzip; fi
   #Which checks do you want to run? May include option to skip these and run as a script with variables later. [if variables = on, skip this section]
   echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y for yes"
@@ -86,10 +89,11 @@ if [ $runasscript = n ]; then
     read myisamcheck
   fi
 #this bottom fi is just for the 'skip setting variables' part of the script
-  else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
+else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
   if [ $checkspace == "y" ]; then checkspacefunction; fi
   if [ $backups == "y" ]; then backupfunction; fi
   if [ $backups == "z" ]; then backupfunction; fi
+  #other variables are read within the script
 fi
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
@@ -115,7 +119,7 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
     elif [ $tabletype == "MERGE" ]; then
       echo "$table in $database is MERGE, checking table :D Maybe you can fix with a UNION command, but I don't do that." | tee -a /tmp/dblogfile
       mysql -e "use $database; CHECK TABLE $table" | tee -a /tmp/dblogfile
-      else echo "$table in $database has tabletype $tabletype and is not anything I actively fix. :? Not altering." | tee -a /tmp/dblogfile
+    else echo "$table in $database has tabletype $tabletype and is not anything I actively fix. :? Not altering." | tee -a /tmp/dblogfile
     fi
   done
 done
