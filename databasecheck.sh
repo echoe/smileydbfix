@@ -1,5 +1,5 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.31
+#Version 0.32
 #Please keep line 2 in place for the version check.
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
@@ -40,6 +40,14 @@ backupfunction() {
     echo "We have backed up $i. Yay! :D" | tee -a /tmp/dblogfile
   done
 }
+backupfunctiongzip() {
+  mkdir -p /home/sqldumps/$thedate; 
+  cd /home/sqldumps/$thedate; 
+  for i in $(mysql -BNe 'show databases'| grep -v _schema); do 
+    `mysqldump $i | gzip > ./$i.sql.gz` | tee -a /tmp/dblogfile
+    echo "We have backed up $i and piped to gzip. Yay! :D" | tee -a /tmp/dblogfile
+  done
+}
 #unused as of yet
 getfractured() {
   $1=`mysql -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`
@@ -60,9 +68,10 @@ if [ $runasscript = n ]; then
   read checkspace
   #this and backups are oneliners since they're simpler to read and shorter that way.
   if [ $checkspace == "y" ]; then checkspacefunction; fi
-  echo -e "Would you like to make backups? y for yes"
+  echo -e "Would you like to make backups? y for yes. z for zipped backups"
   read backups
-  if [ $backups == "y" ]; then backupfunction; fi
+  if [ $backups == "y" ]; then backupfunction; 
+  elif [ $backups == "z" ]; then backupfunctiongzip; fi
   #Which checks do you want to run? May include option to skip these and run as a script with variables later. [if variables = on, skip this section]
   echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y for yes"
   read myisam
@@ -80,6 +89,7 @@ if [ $runasscript = n ]; then
   else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
   if [ $checkspace == "y" ]; then checkspacefunction; fi
   if [ $backups == "y" ]; then backupfunction; fi
+  if [ $backups == "z" ]; then backupfunction; fi
 fi
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
