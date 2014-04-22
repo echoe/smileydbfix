@@ -7,7 +7,7 @@
 #This automatically fixes stuff. it does everything aside from myisam checks and does not wait for confirmation. :)
 runasscript=y
 checkspace=n
-backups=z
+backups=n
 myisam=y
 innodb=y
 updatecheck=n
