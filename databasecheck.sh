@@ -1,5 +1,5 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.34
+#Version 0.35
 #Please keep line 2 in place for the version check. Version 0,34: better script functionality!
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
