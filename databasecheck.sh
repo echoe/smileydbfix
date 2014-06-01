@@ -71,11 +71,11 @@ if [ $runasscript = n ]; then
   echo -e "Would you like to check space for backups? y for yes"
   read checkspace
   #this and backups are oneliners since they're simpler to read and shorter that way.
-  if [ $checkspace == "y" ]; then checkspacefunction; fi
+  if [ "$checkspace" == "y" ]; then checkspacefunction; fi
   echo -e "Would you like to make backups? y for yes. z for zipped backups"
   read backups
-  if [ $backups == "y" ]; then backupfunction;
-  elif [ $backups == "z" ]; then backupfunctiongzip; fi
+  if [ "$backups" == "y" ]; then backupfunction;
+  elif [ "$backups" == "z" ]; then backupfunctiongzip; fi
   #Which checks do you want to run? May include option to skip these and run as a script with variables later. [if variables = on, skip this section]
   echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y for yes"
   read myisam
@@ -85,7 +85,7 @@ if [ $runasscript = n ]; then
   echo "Would you actually like to run the MyISAMcheck MySQL check? Type yes for yes"
   read myisamcheck
   #Check this again just to make absolutely, /absolutely/ sure.
-  if [ $myisamcheck == yes ]; then
+  if [ "$myisamcheck" == yes ]; then
     echo "Are you sure? This will, again, cause MySQL downtime! Please type yes again to confirm."
     read myisamcheck
   fi
