@@ -96,6 +96,8 @@ else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/d
   if [ $backups == "z" ]; then backupfunction; fi
   #other variables are read within the script
 fi
+#set date
+thestarttime=`date | awk '{print $2,$3,$4}'`
 #echo the choices into the logfile when the logfile works
 echo "Backups=" $backups, "MyISAM=" $myisam, "InnoDB=" $innodb | tee -a /tmp/dblogfile
 #for loop, grab all the databases
@@ -125,7 +127,7 @@ for database in $(mysql -e "SHOW DATABASES;"|tail -n+2); do
   done
 done
 #run the myisamcheck if needed.
-if [ $myisamcheck == "yes" ]; then
+if [ "$myisamcheck" == "yes" ]; then
   #Tell the user what's up.
   startmyisamtables=$(getfractured)
   echo "Current number of fractured tables: $startmyisamtables" | tee -a /tmp/dblogfile
@@ -140,6 +142,8 @@ if [ $myisamcheck == "yes" ]; then
 fi
 #Tell them about the logs now that it's run!
 finalfracturedtables=$(getfractured)
+theendtime=`date | awk '{print $2,$3,$4}'`
+echo "The total time your MySQL was being checked was from $thestarttime to $theendtime." | tee -a /tmp/dblogfile
 echo "Final number of fractured tables: $finalfracturedtables" | tee -a /tmp/dblogfile
 echo "Total change: from $starttables to $finalfracturedtables" | tee -a /tmp/dblogfile
 echo "Finished! If you're wondering exactly what happened, logs for this are created in /tmp/dblogfile." | tee -a /tmp/dblogfile
