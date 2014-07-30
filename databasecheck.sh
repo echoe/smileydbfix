@@ -35,6 +35,7 @@ backupfunction() {
       `mysqldump $i > ./$i.sql` | tee -a /tmp/dblogfile; echo "We have backed up $i. Yay! :D" | tee -a /tmp/dblogfile
     elif [[ $backuptype == z ]]; then
       `mysqldump $i | gzip > ./$i.sql` | tee -a /tmp/dblogfile; echo "We have backed up $i. Yay! :D" | tee -a /tmp/dblogfile
+    fi
   done
 }
 #This is used to get the number of fractured tables and is returned by setting a variable to $(getfractured)
