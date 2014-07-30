@@ -182,7 +182,8 @@ if [ "$myisamcheck" == "yes" ]; then
   #Record the date [to get total downtime], then turn off MySQL for the checks.
   starttime=`date | awk '{print $2,$3,$4}'`
   service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld | tee -a /tmp/dblogfile
-  #this is my general preferred myisamcheck setting.
+  #Let's tell the logs what we're running
+  echo "Key buffer size=" $keybuffersize, "Read buffer size=" $readbuffersize, "Write buffer size=" $writebuffersize, "Sort buffer size =" $sortbuffersize | tee -a /tmp/dblogfile
   myisamchk --safe-recover --key_buffer_size=$keybuffersize --read_buffer_size=$readbuffersize --write_buffer_size=$writebuffersize --sort_buffer_size=$sortbuffersize $datadir/*/*.MYI | tee -a /tmp/dblogfile
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
   endtime=`date | awk '{print $2,$3,$4}'`
