@@ -144,7 +144,7 @@ if [ $runasscript = n ]; then
       read sortbuffersize
       echo "Data directory? Default " $datadir
       read datadir
-    
+    fi
   fi
   #Ask because this takes forever D:
   echo -e "Would you like to check space for backups? y for yes"
