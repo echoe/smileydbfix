@@ -93,7 +93,7 @@ fi
 echo "Welcome to databasecheck.sh!" | tee -a /tmp/dblogfile
 echo "Current number of fractured tables: $starttables" | tee -a /tmp/dblogfile
 #Check to make sure that the mysql [or mariadb] version is 5.x or 10.x [fixed!]. Also, reset the logs [tee, not tee -a]
-if [[] $versioncheck == "5" || $versioncheck == "10" ]]; then
+if [[ $versioncheck == "5" || $versioncheck == "10" ]]; then
   echo "You have MySQL 5 or MariaDB 10 :D" | tee -a /tmp/dblogfile
   else echo "you don't have MySQL 5! don't run this >.>" | tee -a /tmp/dblogfile; exit
 fi
