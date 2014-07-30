@@ -1,6 +1,6 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.36
-#Added: single database check functionality!
+#Version 0.38
+#Added: single database check functionality! (needs an additional check or two ...)
 #Changed: order of variables (it asks if you want to fix tables before it asks if you want backups so you can go SPACE SPACE SPACE)
 #Please keep line 2 in place for the version check. Version 0,34: better script functionality!
 #To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
@@ -67,13 +67,13 @@ fixtables() {
     tabletype=`mysql -e "SELECT ENGINE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='$table' AND TABLE_SCHEMA='$database';" | tail -n+2`
 #check to see which table it is, and fix it with a preferred method for each as needed
     if [ $tabletype == "InnoDB" ]; then
-      if [ $innodb == y ]; then
+      if [[ $innodb == y ]]; then
         echo "$table in $database is InnoDB, rebuilding with alter table command :D" | tee -a /tmp/dblogfile
         mysql -e "use $database; ALTER TABLE $table ENGINE = InnoDB" | tee -a /tmp/dblogfile
         else echo "$table in $database is InnoDB, doing nothing - disabled :|" | tee -a /tmp/dblogfile
       fi
     elif [ $tabletype == "MyISAM" ]; then
-      if [ $myisam == y ]; then
+      if [[ $myisam == y ]]; then
         echo "$table in $database is MyISAM, repairing with mysqlcheck :D" | tee -a /tmp/dblogfile
         mysqlcheck --auto-repair --optimize $database $table | tee -a /tmp/dblogfile
         else echo "$table in $database is MyISAM, doing nothing - disabled :|" | tee -a /tmp/dblogfile
@@ -99,17 +99,19 @@ echo "Current number of fractured tables: $starttables" | tee -a /tmp/dblogfile
 if [ $runasscript = n ]; then
   echo -e "If you would like to fix a specific database, please type it now."
   read database
-  if [ `mysql -e "show databases;" |grep "$database"` ]; then
-    echo -e "Please provide the table if you want to fix a specific table!"
-    read table
-    if [ `mysql -e "use $database; desc tables;" | grep "$table"` ]; then
-      fixtables $database $table
-    else for table in $(mysql -e "use $database; show tables;" | tail -n+2); do
-      fixtables $database $table
-    done
+  if [[ $database != "" ]]; then
+    if [[ `mysqlshow |grep "$database"` ]]; then
+      echo -e "Please provide the table if you want to fix a specific table!"
+      read table
+      if [[ $table != "" ]]; then
+        fixtables $database $table
+      else for table in $(mysql -e "use $database; show tables;" | tail -n+2); do
+        fixtables $database $table
+      done
+      fi
+      echo "Thanks for using databasecheck.sh . Have a good day. :D"
+      exit
     fi
-    echo "Thanks for using databasecheck.sh . Have a good day. :D"
-    exit
   fi
   #If you don't want a single check, which checks do you want to run? May include option to skip these and run as a script with variables later. [if variables = on, skip this section]
   echo "Would you actually like to run MyISAM mysqlchecks (no downtime)? Type y for yes"
