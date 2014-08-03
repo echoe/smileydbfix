@@ -1,5 +1,5 @@
 #MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
-#Version 0.40
+#Version 0.42
 #Added: single database check functionality! (needs an additional check or two ...), customizable MyISAM check
 #Changed: order of variables (it asks if you want to fix tables before it asks if you want backups so you can go SPACE SPACE SPACE)
 #Please keep line 2 in place for the version check. Version 0,34: better script functionality!
@@ -9,7 +9,7 @@
 #First we set variables that aren't beholden to functions!
 #This grabs the datadir using horrible cut commands. I want to switch this to sed, or something more dependable, but this should do for now and into the future.
 #Our data directory is almost always /var/lib/mysql anyways [and the config file is almost always /etc/my.cnf]
-datadir=`ps aux|grep [m]ysql | grep -v safe | cut -d"t" -f2 | cut -d"=" -f2 | cut -d" " -f1`
+datadir=`ps aux|grep [m]ysql|grep -v safe|cut -d"=" -f3|cut -d" " -f1`
 runasscript=n
 myisam=y
 innodb=y
@@ -99,20 +99,30 @@ if [[ $versioncheck == "5" || $versioncheck == "10" ]]; then
 fi
 #If running as script, skip this section. else, run this section.
 if [ $runasscript = n ]; then
-  echo -e "If you would like to fix a specific database, please type it now. (Watch out for typing errors!)"
+  echo -e "If you would like to fix a specific database, please type it now, or type d for a list of databases."
   read database
+  if [[ $database == "d" ]]; then
+    echo `mysql -e "show databases;"`
+    echo -e "If you would like to fix a specific database, please type it now."
+    read database
+  fi
   if [[ $database != "" ]]; then
     if [[ `mysqlshow |grep "$database"` ]]; then
-      echo -e "Please provide the table if you want to fix a specific table! (Watch out for typing errors!)"
+      echo -e "Please provide the table if you want to fix a specific table, or enter t for a list of tables."
       read table
+      if [[ $table == "t" ]]; then
+        echo `mysql -e "use $database; show tables;"`
+        echo -e "Please provide the table if you want to fix a specific table."
+        read table
+      fi
       if [[ $table != "" ]]; then
         fixtables $database $table
       else for table in $(mysql -e "use $database; show tables;" | tail -n+2); do
         fixtables $database $table
       done
       fi
-      #Exits the script here so it doesn't try to check all the tables afterwards >.>
-      echo "Thanks for using databasecheck.sh . Have a good day. :D"; exit
+      echo "Thanks for using databasecheck.sh . Have a good day. :D"
+      exit
     fi
   fi
   #If you don't want a single check, which checks do you want to run? May include option to skip these and run as a script with variables later. [if variables = on, skip this section]
@@ -130,20 +140,21 @@ if [ $runasscript = n ]; then
     #get settings
     if [ "$myisamcheck" == yes ]; then
       echo "Well, you'll want to change the settings then most likely. Here are the options."
-      keybuffersize="1G"
-      readbuffersize="300M"
-      writebuffersize="300M"
-      sortbuffersize="2G"
       echo "Key buffer size? Default 1G"
       read keybuffersize
+      if [[ $keybuffersize == "" ]]; then keybuffersize="1G"; fi
       echo "Read buffer size? Default 300M"
       read readbuffersize
+      if [[ $readbuffersize == "" ]]; then readbuffersize="300M"; fi
       echo "Write buffer size? Default 300M"
       read writebuffersize
+      if [[ $writebuffersize == "" ]]; then writebuffersize="300M"; fi
       echo "Sort buffer size? Default 2G"
       read sortbuffersize
+      if [[ $sortbuffersize == "" ]]; then sortbuffersize="1G"; fi
       echo "Data directory? Default " $datadir
       read datadir
+      if [[ $datadir == "" ]]; then datadir=`ps aux|grep [m]ysql|grep -v safe|cut -d"=" -f3|cut -d" " -f1`; fi
     fi
   fi
   #Ask because this takes forever D:
@@ -176,7 +187,6 @@ done
 if [ "$myisamcheck" == "yes" ]; then
   #Tell the user what's up. This also measures MyIsam check start time as it is actual downtime and needs to be read differently
   startmyisamtables=$(getfractured)
-  datadir=
   echo "Current number of fractured tables: $startmyisamtables" | tee -a /tmp/dblogfile
   echo "MyISAM check enabled, turning off MySQL and running now!" | tee -a /tmp/dblogfile
   #Record the date [to get total downtime], then turn off MySQL for the checks.
