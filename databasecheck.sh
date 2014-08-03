@@ -162,10 +162,12 @@ if [ $runasscript = n ]; then
   read checkspace
   #this and backups are oneliners since they're simpler to read and shorter that way. 
   #This is at the back but is done first because generally people just want to fix tables.
-  if [ "$checkspace" == "y" ]; then checkspacefunction; fi
-  echo -e "Would you like to make backups? y for yes. z for zipped backups"
-  read backups
-  if [[ "$backups" == "y" || "$backups" == "z" ]]; then backupfunction $backups; fi
+  if [ "$checkspace" == "y" ]; then 
+    checkspacefunction;
+    echo -e "Would you like to make backups? y for yes. z for zipped backups"
+    read backups
+    if [[ "$backups" == "y" || "$backups" == "z" ]]; then backupfunction $backups; fi
+  fi
 else echo "Skipping variable check, they are set in the script!" | tee -a /tmp/dblogfile
   if [ $checkspace == "y" ]; then checkspacefunction; fi
   if [[ "$backups" == "y" || "$backups" == "z" ]]; then backupfunction $backups; fi
