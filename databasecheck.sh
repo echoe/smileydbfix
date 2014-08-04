@@ -1,9 +1,9 @@
-#MySQL database checker and fixer bash <(curl http://files.wiredtree.com/misc/databasechecktest.sh)
+#MySQL database checker and fixer bash <(curl https://raw.githubusercontent.com/echoe/smileydbfix/master/databasecheck.sh)
 #Version 0.42
 #Added: single database check functionality! (needs an additional check or two ...), customizable MyISAM check
 #Changed: order of variables (it asks if you want to fix tables before it asks if you want backups so you can go SPACE SPACE SPACE)
 #Please keep line 2 in place for the version check. Working on: -Additional MyISAM options -Testing script functionality
-#To run (not as script): bash <(curl http://files.wiredtree.com/misc/databasechecktest.sh)
+#To run (not as script): bash <(curl https://raw.githubusercontent.com/echoe/smileydbfix/master/databasecheck.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 #if you'd like, change variables here! Just uncomment and switch to whatever. By default this is set to take zipped backups, then fix.
 #First we set variables that aren't beholden to functions!
