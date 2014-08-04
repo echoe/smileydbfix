@@ -1,9 +1,9 @@
-#MySQL database checker and fixer https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh
+#MySQL database checker and fixer bash <(curl http://files.wiredtree.com/misc/databasechecktest.sh)
 #Version 0.42
 #Added: single database check functionality! (needs an additional check or two ...), customizable MyISAM check
 #Changed: order of variables (it asks if you want to fix tables before it asks if you want backups so you can go SPACE SPACE SPACE)
-#Please keep line 2 in place for the version check. Version 0,34: better script functionality!
-#To run (not as script): bash <(curl https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh)
+#Please keep line 2 in place for the version check. Working on: -Additional MyISAM options -Testing script functionality
+#To run (not as script): bash <(curl http://files.wiredtree.com/misc/databasechecktest.sh)
 #To parse logs: :D means it is repairing successfully. :| means that it did nothing. :? means that it doesn't deal with it.
 #if you'd like, change variables here! Just uncomment and switch to whatever. By default this is set to take zipped backups, then fix.
 #First we set variables that aren't beholden to functions!
@@ -155,6 +155,8 @@ if [ $runasscript = n ]; then
       echo "Data directory? Default " $datadir
       read datadir
       if [[ $datadir == "" ]]; then datadir=`ps aux|grep [m]ysql|grep -v safe|cut -d"=" -f3|cut -d" " -f1`; fi
+      echo "Want to keep MySQL as up as possible? Press y to try external locking for MyISAM checks. This restarts MySQL twice - once to enable external locking, and once to disable it. You can keep MySQL up while checking MyISAM tables with this. However, the table that is checked will be down, and it lowers performance."
+      read lock
     fi
   fi
   #Ask because this takes forever D:
@@ -162,8 +164,8 @@ if [ $runasscript = n ]; then
   read checkspace
   #this and backups are oneliners since they're simpler to read and shorter that way. 
   #This is at the back but is done first because generally people just want to fix tables.
-  if [ "$checkspace" == "y" ]; then 
-    checkspacefunction;
+  if [ "$checkspace" == "y" ]; then
+    checkspacefunction
     echo -e "Would you like to make backups? y for yes. z for zipped backups"
     read backups
     if [[ "$backups" == "y" || "$backups" == "z" ]]; then backupfunction $backups; fi
@@ -193,13 +195,17 @@ if [ "$myisamcheck" == "yes" ]; then
   echo "MyISAM check enabled, turning off MySQL and running now!" | tee -a /tmp/dblogfile
   #Record the date [to get total downtime], then turn off MySQL for the checks.
   starttime=`date | awk '{print $2,$3,$4}'`
-  service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld | tee -a /tmp/dblogfile
-  #Let's tell the logs what we're running
-  echo "Key buffer size=" $keybuffersize, "Read buffer size=" $readbuffersize, "Write buffer size=" $writebuffersize, "Sort buffer size =" $sortbuffersize | tee -a /tmp/dblogfile
+  if [[ $lock != y ]]; then service mysql stop && chmod -x /usr/bin/mysql && chmod -x /usr/sbin/mysqld | tee -a /tmp/dblogfile
+    else
+    if [[ `grep external-locking /etc/my.cnf` == "" ]]; then sed -i "/mysqld/a \external-locking" /etc/my.cnf ; fi
+    service mysql restart
+  fi
+  echo "External locking =" $lock, "Key buffer size=" $keybuffersize, "Read buffer size=" $readbuffersize, "Write buffer size=" $writebuffersize, "Sort buffer size =" $sortbuffersize | tee -a /tmp/dblogfile
   myisamchk --safe-recover --key_buffer_size=$keybuffersize --read_buffer_size=$readbuffersize --write_buffer_size=$writebuffersize --sort_buffer_size=$sortbuffersize $datadir/*/*.MYI | tee -a /tmp/dblogfile
   chmod +x /usr/bin/mysql && chmod +x /usr/sbin/mysqld && service mysql start | tee -a /tmp/dblogfile
   endtime=`date | awk '{print $2,$3,$4}'`
-  echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile
+  if [[ $lock != y ]]; then echo "The total time your MySQL was down was from $starttime to $endtime." | tee -a /tmp/dblogfile;
+    else sed -i '/^external-locking/d' /etc/my.cnf ;echo "The total time this was running was from $starttime to $endtime." | tee -a /tmp/dblogfile; fi
 fi
 #Tell them about the logs now that it's run!
 finalfracturedtables=$(getfractured)
