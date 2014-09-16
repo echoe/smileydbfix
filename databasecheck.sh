@@ -151,7 +151,7 @@ if [ $runasscript = n ]; then
       if [[ $writebuffersize == "" ]]; then writebuffersize="300M"; fi
       echo "Sort buffer size? Default 2G"
       read sortbuffersize
-      if [[ $sortbuffersize == "" ]]; then sortbuffersize="1G"; fi
+      if [[ $sortbuffersize == "" ]]; then sortbuffersize="2G"; fi
       echo "Data directory? Default " $datadir
       read datadir
       if [[ $datadir == "" ]]; then datadir=`ps aux|grep [m]ysql|grep -v safe|cut -d"=" -f3|cut -d" " -f1`; fi
