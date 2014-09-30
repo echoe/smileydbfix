@@ -8,7 +8,6 @@ myisam=y
 innodb=y
 checkspace=n
 backups=z
-#updatecheck is untested and therefore off as you generally won't want it on..
 updatecheck=n
 #myisamcheck needs to be switched to yes to run, not y. this is for safety.
 myisamcheck=no
@@ -70,13 +69,16 @@ if [ -a /tmp/dblogfile ]; then
 fi
 
 #if this is being run as a script, check for an update before running [untested!]
-if [ $runasscript = "y" ]; then
-  #grab
-  if [ updatecheck = "y" ]; then
-    localversion=`sed '2q;d' $0 | awk '{print $2}'`
-    remoteversion=`wget https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}'`
+if [ $runasscript == "y" ]; then
+  echo "runasscript yes" | tee -a /tmp/dblogfile
+  if [ $updatecheck == "y" ]; then
+    echo "updatecheck yes" | tee -a /tmp/dblogfile
+    localversion=`sed '2q;d' $0 | awk '{print $2}' | cut -d. -f2`
+    remoteversion=`curl https://raw.githubusercontent.com/echoe/smileydbfix/master/databasecheck.sh | head -n2 | tail -n1 | awk '{print $2}' | cut -d. -f2`
     if [ $localversion != $remoteversion ]; then
       echo "You have an old version! Please download the latest version from https://raw.github.com/echoe/smileydbfix/master/databasecheck.sh ." | tee -a /tmp/dblogfile
+      exit
+    else echo "You have a current version, continuing :)" | tee -a /tmp/dblogfile
     fi
   fi
 fi
